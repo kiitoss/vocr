@@ -89,7 +89,9 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 if sys.stdout.isatty():
                     if is_stream:
                         os.system('cls' if os.name == 'nt' else 'clear')
-                        print(json.dumps(data, indent=4))
+                        for key, value in data.get('data').items():
+                            value = ' // '.join(value)
+                            print(f'{key} : {value}')
                     else:
                         current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
                         print(
