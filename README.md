@@ -192,3 +192,5 @@ Here the data will be shown on the terminal, depending on what you have included
 ```sh
 python3 vocr.py -v <path-to-video> -d data.json -r result.json -o output.avi
 ```
+
+Enjoy :)
