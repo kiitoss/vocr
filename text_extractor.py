@@ -40,8 +40,27 @@ def get_text(reader, image_array, subimages_coordinates):
     result = {}
     for coordinates in subimages_coordinates:
         x, y, w, h = coordinates.get('box')
+        patterns = coordinates.get('match-pattern')
         cropped = image_array[y:y+h, x:x+w]
-        result[coordinates.get('label')] = reader.readtext(cropped, detail=0)
+        if patterns:
+            cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
+            best_pattern = None
+            best_match = None
+            for key, pattern in patterns.items():
+                template = cv2.imread(pattern, 0)
+                res = cv2.matchTemplate(
+                    cropped, template, cv2.TM_CCOEFF_NORMED)
+                threshold = 0.8
+
+                arr1, arr2 = np.where(res >= threshold)
+                current_match = len(arr1) + len(arr2)
+                if best_pattern is None or current_match > best_match:
+                    best_pattern = key
+                    best_match = current_match
+            result[coordinates.get('label')] = [best_pattern]
+        else:
+            result[coordinates.get('label')] = reader.readtext(
+                cropped, detail=0)
     return result
 
 
