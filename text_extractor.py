@@ -16,14 +16,17 @@ def convert_frame_mss_to_cv2(frame):
 
 
 def draw_text_on_image(image, coordinates, text):
-    color = (0, 255, 0) if text != '' else (0, 0, 255)
+    if isinstance(text, list) or (text is not None and len(text) == 0):
+        text = ' or '.join(text)
+
+    color = (0, 255, 0) if text not in (None, '') else (0, 0, 255)
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     x, y, w, h = coordinates.get('box')
 
     cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
 
-    if text != '':
+    if text not in (None, ''):
         cv2.putText(image, text, (x, y-10), font, 0.7, color, 2)
 
     return image
@@ -36,28 +39,36 @@ def is_different(previous_data, new_data):
     return False
 
 
-def get_text(reader, image_array, subimages_coordinates):
+def get_pattern(cropped, patterns):
+    cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
+    best_pattern = None
+    best_match = None
+    for key, pattern in patterns.items():
+        template = cv2.imread(pattern, 0)
+        res = cv2.matchTemplate(
+            cropped, template, cv2.TM_CCOEFF_NORMED)
+        threshold = 0.8
+
+        arr1, arr2 = np.where(res >= threshold)
+        current_match = len(arr1) + len(arr2)
+
+        if current_match == 0:
+            continue
+
+        if best_pattern is None or current_match > best_match:
+            best_pattern = key
+            best_match = current_match
+    return best_pattern
+
+
+def get_text_or_pattern(reader, image_array, subimages_coordinates):
     result = {}
     for coordinates in subimages_coordinates:
         x, y, w, h = coordinates.get('box')
         patterns = coordinates.get('match-pattern')
         cropped = image_array[y:y+h, x:x+w]
         if patterns:
-            cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
-            best_pattern = None
-            best_match = None
-            for key, pattern in patterns.items():
-                template = cv2.imread(pattern, 0)
-                res = cv2.matchTemplate(
-                    cropped, template, cv2.TM_CCOEFF_NORMED)
-                threshold = 0.8
-
-                arr1, arr2 = np.where(res >= threshold)
-                current_match = len(arr1) + len(arr2)
-                if best_pattern is None or current_match > best_match:
-                    best_pattern = key
-                    best_match = current_match
-            result[coordinates.get('label')] = [best_pattern]
+            result[coordinates.get('label')] = get_pattern(cropped, patterns)
         else:
             result[coordinates.get('label')] = reader.readtext(
                 cropped, detail=0)
@@ -68,14 +79,13 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
     img = PIL.Image.open(ifile)
     image_array = np.array(img)
 
-    data = get_text(reader, image_array, subimages_coordinates)
+    data = get_text_or_pattern(reader, image_array, subimages_coordinates)
 
     if ofile is not None:
         image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
         for coordinates in subimages_coordinates:
             texts = data.get(coordinates.get('label'))
-            image_array = draw_text_on_image(
-                image_array, coordinates, ' or '.join(texts))
+            image_array = draw_text_on_image(image_array, coordinates, texts)
 
         cv2.imwrite(ofile, image_array)
 
@@ -130,7 +140,7 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 data = {
                     "id": id_image,
                     "time": time.time() - initial_time,
-                    "data": get_text(reader, frame, subimages_coordinates)
+                    "data": get_text_or_pattern(reader, frame, subimages_coordinates)
                 }
 
                 if current_data is None or is_different(current_data, data.get('data')):
@@ -140,7 +150,8 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                         if is_stream:
                             os.system('cls' if os.name == 'nt' else 'clear')
                             for key, value in data.get('data').items():
-                                value = ' or '.join(value)
+                                if isinstance(value, list) or (value is not None and len(value) == 0):
+                                    value = ' or '.join(value)
                                 print(f'{key} : {value}')
                         else:
                             current_frame = int(
@@ -157,9 +168,11 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
             # save image
             if out is not None:
                 for coordinates in subimages_coordinates:
-                    texts = current_data.get(coordinates.get('label'))
+                    text = current_data.get(coordinates.get('label'))
+                    if isinstance(text, list) or (text is not None and len(text) == 0):
+                        text = ' or '.join(text)
                     frame = draw_text_on_image(
-                        frame, coordinates, ' or '.join(texts))
+                        frame, coordinates, text)
 
                 out.write(frame)
 
