@@ -21,6 +21,8 @@ def get_args():
                     help="path to input data")
     ap.add_argument("-o", "--ofile", type=str,
                     help="path to optionaly output image/video file")
+    ap.add_argument("-r", "--rfile", type=str,
+                    help="path to optionaly result file")
     return vars(ap.parse_args())
 
 
@@ -55,9 +57,13 @@ def main():
     vfile = args.get("vfile")
     dfile = args.get("dfile")
     ofile = args.get("ofile")
+    rfile = args.get("rfile")
 
     if ifile is not None and vfile is not None:
         error("Only one file can be specified")
+
+    if ifile is None and rfile is None:
+        error("You must specify a result file when using a video or a stream")
 
     if ifile is not None:
         check_file(ifile, ['.jpg', '.jpeg', '.png'])
@@ -81,7 +87,11 @@ def main():
         result = text_extractor.from_stream(
             reader, subimages_coordinates, ofile)
 
-    print(json.dumps(result, indent=4))
+    if rfile is not None:
+        with open(rfile, 'w') as f:
+            json.dump(result, f, indent=4)
+    else:
+        print(json.dumps(result, indent=4))
 
 
 if __name__ == '__main__':

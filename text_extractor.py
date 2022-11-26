@@ -1,3 +1,4 @@
+import sys
 import PIL
 import numpy as np
 import cv2
@@ -5,6 +6,7 @@ import time
 from mss import mss
 from screeninfo import get_monitors
 import json
+import os
 
 
 def convert_frame_mss_to_cv2(frame):
@@ -55,6 +57,7 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
         video = cv2.VideoCapture(vfile)
         width = int(video.get(3))
         height = int(video.get(4))
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # instantiate video writer
     out = None
@@ -74,16 +77,27 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 _, frame = video.read()
 
             # image processing
-            counter += 1
             if counter % 10 == 0:
                 data = {
                     "id": id_image,
                     "time": time.time() - initial_time,
                     "data": get_text(reader, frame, subimages_coordinates)
                 }
+
                 result.append(data)
-                print(json.dumps(data, indent=4))
+
+                if sys.stdout.isatty():
+                    if is_stream:
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(json.dumps(data, indent=4))
+                    else:
+                        current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                        print(
+                            f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
+
                 id_image += 1
+
+            counter += 1
 
             # save image
             if out is not None:
