@@ -39,6 +39,13 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
     }
 
 
+def is_different(previous_data, new_data):
+    for key, value in new_data.items():
+        if previous_data.get(key) != value:
+            return True
+    return False
+
+
 def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
     is_stream = vfile is None
 
@@ -46,6 +53,8 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
     id_image = 1
     counter = 0
     initial_time = time.time()
+
+    current_data = None
 
     # instantiate video capture object
     if is_stream:
@@ -84,20 +93,24 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                     "data": get_text(reader, frame, subimages_coordinates)
                 }
 
-                result.append(data)
+                if current_data is None or is_different(current_data, data.get('data')):
+                    result.append(data)
 
-                if sys.stdout.isatty():
-                    if is_stream:
-                        os.system('cls' if os.name == 'nt' else 'clear')
-                        for key, value in data.get('data').items():
-                            value = ' // '.join(value)
-                            print(f'{key} : {value}')
-                    else:
-                        current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                        print(
-                            f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
+                    if sys.stdout.isatty():
+                        if is_stream:
+                            os.system('cls' if os.name == 'nt' else 'clear')
+                            for key, value in data.get('data').items():
+                                value = ' or '.join(value)
+                                print(f'{key} : {value}')
+                        else:
+                            current_frame = int(
+                                video.get(cv2.CAP_PROP_POS_FRAMES))
+                            print(
+                                f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
 
-                id_image += 1
+                    current_data = data.get('data')
+
+                    id_image += 1
 
             counter += 1
 
