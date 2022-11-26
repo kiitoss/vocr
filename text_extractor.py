@@ -5,7 +5,6 @@ import cv2
 import time
 from mss import mss
 from screeninfo import get_monitors
-import json
 import os
 
 
@@ -14,6 +13,27 @@ def convert_frame_mss_to_cv2(frame):
     frame = np.flip(frame[:, :, :3], 2)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return frame
+
+
+def draw_text_on_image(image, coordinates, text):
+    color = (0, 255, 0) if text != '' else (0, 0, 255)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    x, y, w, h = coordinates.get('box')
+
+    cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
+
+    if text != '':
+        cv2.putText(image, text, (x, y-10), font, 0.7, color, 2)
+
+    return image
+
+
+def is_different(previous_data, new_data):
+    for key, value in new_data.items():
+        if previous_data.get(key) != value:
+            return True
+    return False
 
 
 def get_text(reader, image_array, subimages_coordinates):
@@ -29,21 +49,22 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
     img = PIL.Image.open(ifile)
     image_array = np.array(img)
 
+    data = get_text(reader, image_array, subimages_coordinates)
+
     if ofile is not None:
-        cv2.imwrite(ofile, img)
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+        for coordinates in subimages_coordinates:
+            texts = data.get(coordinates.get('label'))
+            image_array = draw_text_on_image(
+                image_array, coordinates, ' or '.join(texts))
+
+        cv2.imwrite(ofile, image_array)
 
     return {
         "id": 1,
         "time": 0,
-        "data": get_text(reader, image_array, subimages_coordinates)
+        "data": data
     }
-
-
-def is_different(previous_data, new_data):
-    for key, value in new_data.items():
-        if previous_data.get(key) != value:
-            return True
-    return False
 
 
 def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
@@ -116,6 +137,11 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
 
             # save image
             if out is not None:
+                for coordinates in subimages_coordinates:
+                    texts = current_data.get(coordinates.get('label'))
+                    frame = draw_text_on_image(
+                        frame, coordinates, ' or '.join(texts))
+
                 out.write(frame)
 
         except KeyboardInterrupt:
