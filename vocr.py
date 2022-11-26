@@ -78,16 +78,16 @@ def extract_data(ifile, vfile, dfile, ofile, rfile, from_main=False):
     reader = easyocr.Reader(['en'])
 
     if ifile is not None:
-        result = extractor.from_image(
+        data = extractor.from_image(
             reader, ifile, subimages_coordinates, ofile)
     elif vfile is not None:
-        result = extractor.from_video(
+        data = extractor.from_video(
             reader, vfile, subimages_coordinates, ofile)
     else:
-        result = extractor.from_stream(
+        data = extractor.from_stream(
             reader, subimages_coordinates, ofile)
 
-    return result
+    return data
 
 
 def main():

@@ -15,77 +15,100 @@ def convert_frame_mss_to_cv2(frame):
     return frame
 
 
-def draw_text_on_image(image, coordinates, text):
-    if isinstance(text, list) or (text is not None and len(text) == 0):
-        text = ' or '.join(text)
+# Convert dat to string
+def data_to_string(data):
+    if data is None:
+        return ''
+    if isinstance(data, list):
+        return ' or '.join(data)
+    return data
 
-    color = (0, 255, 0) if text not in (None, '') else (0, 0, 255)
+
+# Draw data on image with its rectangle
+def draw_data_on_image(image, coordinates, data):
+    text = data_to_string(data)
+
+    color = (0, 255, 0) if text != '' else (0, 0, 255)
     font = cv2.FONT_HERSHEY_SIMPLEX
-
     x, y, w, h = coordinates.get('box')
-
     cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
 
-    if text not in (None, ''):
+    if text != '':
         cv2.putText(image, text, (x, y-10), font, 0.7, color, 2)
 
     return image
 
 
-def is_different(previous_data, new_data):
+# Check if new data is the same as previous data
+def is_data_different(previous_data, new_data):
     for key, value in new_data.items():
         if previous_data.get(key) != value:
             return True
     return False
 
 
-def get_pattern(cropped, patterns):
+# Return result of pattern matching
+def get_pattern_match(cropped, pattern):
+    template = cv2.imread(pattern, 0)
+    res = cv2.matchTemplate(cropped, template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.8
+
+    arr1, arr2 = np.where(res >= threshold)
+    return len(arr1) + len(arr2)
+
+
+# Return the most similar pattern if corresponding pattern found
+def find_pattern(cropped, patterns):
     cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
     best_pattern = None
-    best_match = None
+    best_pattern_match = None
     for key, pattern in patterns.items():
-        template = cv2.imread(pattern, 0)
-        res = cv2.matchTemplate(
-            cropped, template, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.8
+        current_pattern_match = get_pattern_match(cropped, pattern)
 
-        arr1, arr2 = np.where(res >= threshold)
-        current_match = len(arr1) + len(arr2)
-
-        if current_match == 0:
+        # if no similarity found, continue
+        if current_pattern_match == 0:
             continue
 
-        if best_pattern is None or current_match > best_match:
+        if best_pattern is None or current_pattern_match > best_pattern_match:
             best_pattern = key
-            best_match = current_match
+            best_pattern_match = current_pattern_match
+
     return best_pattern
 
 
-def get_text_or_pattern(reader, image_array, subimages_coordinates):
+# Extract patterns or texts from the list of subimages composing the image
+def extract_information_from_image(reader, image_array, subimages_coordinates):
     result = {}
     for coordinates in subimages_coordinates:
         x, y, w, h = coordinates.get('box')
         patterns = coordinates.get('match-pattern')
         cropped = image_array[y:y+h, x:x+w]
+
+        # if patterns are defined, try to find the most similar pattern
         if patterns:
-            result[coordinates.get('label')] = get_pattern(cropped, patterns)
+            result[coordinates.get('label')] = find_pattern(cropped, patterns)
+        # else, use the reader to extract data
         else:
             result[coordinates.get('label')] = reader.readtext(
                 cropped, detail=0)
+
     return result
 
 
+# Extract data from image
 def from_image(reader, ifile, subimages_coordinates, ofile):
     img = PIL.Image.open(ifile)
     image_array = np.array(img)
 
-    data = get_text_or_pattern(reader, image_array, subimages_coordinates)
+    data = extract_information_from_image(
+        reader, image_array, subimages_coordinates)
 
+    # save a copy of the image with data on it
     if ofile is not None:
         image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
         for coordinates in subimages_coordinates:
-            texts = data.get(coordinates.get('label'))
-            image_array = draw_text_on_image(image_array, coordinates, texts)
+            subdata = data.get(coordinates.get('label'))
+            image_array = draw_data_on_image(image_array, coordinates, subdata)
 
         cv2.imwrite(ofile, image_array)
 
@@ -96,6 +119,29 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
     }
 
 
+# Print additional informations in terminal while processing video
+def print_processing_infos_in_terminal(is_stream, data, video, total_frames):
+    if not sys.stdout.isatty():
+        return
+
+    # if streaming, print the current data
+    if is_stream:
+        # clear terminal
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        # print values
+        for key, value in data.get('data').items():
+            value = data_to_string(value)
+            print(f'{key} : {value}')
+
+    # if not streaming, print the processing progression
+    else:
+        current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+        print(
+            f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
+
+
+# Extract data from video or stream
 def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
     is_stream = vfile is None
 
@@ -140,39 +186,25 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 data = {
                     "id": id_image,
                     "time": time.time() - initial_time,
-                    "data": get_text_or_pattern(reader, frame, subimages_coordinates)
+                    "data": extract_information_from_image(reader, frame, subimages_coordinates)
                 }
 
-                if current_data is None or is_different(current_data, data.get('data')):
+                # if the data is different from the previous one
+                if current_data is None or is_data_different(current_data, data.get('data')):
                     result.append(data)
-
-                    if sys.stdout.isatty():
-                        if is_stream:
-                            os.system('cls' if os.name == 'nt' else 'clear')
-                            for key, value in data.get('data').items():
-                                if isinstance(value, list) or (value is not None and len(value) == 0):
-                                    value = ' or '.join(value)
-                                print(f'{key} : {value}')
-                        else:
-                            current_frame = int(
-                                video.get(cv2.CAP_PROP_POS_FRAMES))
-                            print(
-                                f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
-
+                    print_processing_infos_in_terminal(
+                        is_stream, data, video, total_frames)
                     current_data = data.get('data')
-
                     id_image += 1
 
             counter += 1
 
-            # save image
+            # save a copy of the image with data on it
             if out is not None:
                 for coordinates in subimages_coordinates:
-                    text = current_data.get(coordinates.get('label'))
-                    if isinstance(text, list) or (text is not None and len(text) == 0):
-                        text = ' or '.join(text)
-                    frame = draw_text_on_image(
-                        frame, coordinates, text)
+                    subdata = current_data.get(coordinates.get('label'))
+                    text = data_to_string(subdata)
+                    frame = draw_data_on_image(frame, coordinates, text)
 
                 out.write(frame)
 
@@ -188,9 +220,11 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
     return result
 
 
+# Extract data from video
 def from_video(reader, vfile, subimages_coordinates, ofile):
     return from_video_or_stream(reader, subimages_coordinates, vfile=vfile, ofile=ofile)
 
 
+# Extract data from stream
 def from_stream(reader, subimages_coordinates, ofile):
     return from_video_or_stream(reader, subimages_coordinates, ofile=ofile)
