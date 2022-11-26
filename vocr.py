@@ -3,10 +3,15 @@ import os
 import sys
 import json
 import easyocr
-import extractor
 
+try:
+    from . import extractor
+except:
+    import extractor
 
 # Error function
+
+
 def error(error):
     print(f'Error - {error}')
     sys.exit()
