@@ -11,16 +11,16 @@ python3 vocr.py -h
 ```
 
 ```
-usage: vocr.py [-h] [-i IFILE] [-v VFILE] -d DFILE [-o OFILE] [-r RFILE]
+usage: vocr.py [-h] -d DFILE [-i IFILE] [-v VFILE] [-o OFILE] [-r RFILE]
 
 options:
   -h, --help            show this help message and exit
+  -d DFILE, --dfile DFILE
+                        path to input data
   -i IFILE, --ifile IFILE
                         path to image file
   -v VFILE, --vfile VFILE
                         path to video file
-  -d DFILE, --dfile DFILE
-                        path to input data
   -o OFILE, --ofile OFILE
                         path to optionaly output image/video file
   -r RFILE, --rfile RFILE
@@ -54,6 +54,38 @@ python3 vocr.py -d example/data.json -v example/video.mp4 -o example/output/vide
 ### With a stream
 
 No examples are provided for the stream but you can create your own. To do so, simply leave the `-i` and `-v` options blank.
+
+---
+
+---
+
+## Possible uses
+
+There are two possible uses :
+
+- Directly from the terminal (explained in detail below)
+- By integrating the folder into your project :
+
+```python
+import vocr
+
+# Called at every scan
+def callback(dict):
+    print('callback:', dict)
+
+
+def main():
+    # Extract data from stream, call `callback` after every scan
+    # Stop only when user press CTRL + C
+    data = vocr.extract_data('data.json', callback=callback)
+
+    # Print the final data when user pressed CTRL+C
+    print(json.dumps(data, indent=4))
+
+
+if __name__ == "__main__":
+    main()
+```
 
 ---
 
