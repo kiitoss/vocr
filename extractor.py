@@ -198,16 +198,26 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
                     "data": extract_information_from_image(reader, frame, subimages_coordinates)
                 }
 
-                # if the data is different from the previous one
+                # if not stream, print processing infos every 10 frames
+                if not is_stream:
+                    print_processing_infos_in_terminal(
+                        is_stream, data, current_frame, total_frames)
+
+                # if data is different from previous data
                 if current_data is None or is_data_different(current_data, data.get('data')):
                     result.append(data)
-                    if callback is None:
+
+                    # if stream and callback is defined, call it, else print new data
+                    if is_stream and callback is not None:
+                        callback(data)
+                    elif is_stream:
                         print_processing_infos_in_terminal(
                             is_stream, data, current_frame, total_frames)
-                    else:
-                        callback(data)
+
                     current_data = data.get('data')
                     id_image += 1
+
+                # if the data is different from the previous one
 
             counter += 1
 
