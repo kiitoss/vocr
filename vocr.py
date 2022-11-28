@@ -52,7 +52,7 @@ def check_file_extension(filepath, extensions):
 
 
 # Check if arguments are valid
-def check_args(ifile, vfile, dfile, rfile, from_main):
+def check_args(ifile, vfile, dfile, ofile, rfile, from_main):
     if ifile is not None and vfile is not None:
         error("Only one file can be specified")
 
@@ -63,10 +63,12 @@ def check_args(ifile, vfile, dfile, rfile, from_main):
         check_file_exists(ifile)
         check_file_extension(ifile, ['.jpg', '.jpeg', '.png'])
     if vfile is not None:
-        check_file_exists(ifile)
-        check_file_extension(ifile, ['.mp4', '.mkv'])
+        check_file_exists(vfile)
+        check_file_extension(vfile, ['.mp4', '.mkv'])
+    if ofile is not None:
+        check_file_extension(ofile, ['.avi'])
     if rfile is not None:
-        check_file_extension(ifile, ['.json'])
+        check_file_extension(rfile, ['.json'])
 
     check_file_exists(dfile)
     check_file_extension(dfile, ['.json'])
@@ -74,7 +76,7 @@ def check_args(ifile, vfile, dfile, rfile, from_main):
 
 # Extract the data from the image, the video or the stream
 def extract_data(ifile, vfile, dfile, ofile, rfile, from_main=False):
-    check_args(ifile, vfile, dfile, rfile, from_main)
+    check_args(ifile, vfile, dfile, ofile, rfile, from_main)
 
     with open(dfile, 'r') as f:
         subimages_coordinates = json.load(f)

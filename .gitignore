@@ -1,11 +1,2 @@
 # cache
 __pycache__
-
-# subimages coordinates data
-data.json
-
-# output directory
-output/
-
-# data directory
-data/

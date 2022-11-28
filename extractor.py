@@ -78,6 +78,8 @@ def find_pattern(cropped, patterns):
 
 # Extract patterns or texts from the list of subimages composing the image
 def extract_information_from_image(reader, image_array, subimages_coordinates):
+    if image_array is None:
+        return {}
     result = {}
     for coordinates in subimages_coordinates:
         x, y, w, h = coordinates.get('box')
@@ -120,7 +122,7 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
 
 
 # Print additional informations in terminal while processing video
-def print_processing_infos_in_terminal(is_stream, data, video, total_frames):
+def print_processing_infos_in_terminal(is_stream, data, current_frame, total_frames):
     if not sys.stdout.isatty():
         return
 
@@ -136,7 +138,6 @@ def print_processing_infos_in_terminal(is_stream, data, video, total_frames):
 
     # if not streaming, print the processing progression
     else:
-        current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
         print(
             f"Frame {current_frame}/{total_frames} ({current_frame/total_frames*100:.2f}%)", end="\r")
 
@@ -168,7 +169,7 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
     out = None
     if ofile is not None:
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        out = cv2.VideoWriter(ofile + '.avi', fourcc,
+        out = cv2.VideoWriter(ofile, fourcc,
                               20.0, (width, height), True)
 
     while is_stream or video.isOpened():
@@ -180,6 +181,10 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 frame = convert_frame_mss_to_cv2(frame)
             else:
                 _, frame = video.read()
+                current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                # fix video.isOpened() false positive
+                if (current_frame == total_frames):
+                    break
 
             # image processing
             if counter % 10 == 0:
@@ -193,7 +198,7 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 if current_data is None or is_data_different(current_data, data.get('data')):
                     result.append(data)
                     print_processing_infos_in_terminal(
-                        is_stream, data, video, total_frames)
+                        is_stream, data, current_frame, total_frames)
                     current_data = data.get('data')
                     id_image += 1
 
