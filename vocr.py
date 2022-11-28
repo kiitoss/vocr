@@ -74,7 +74,7 @@ def check_args(dfile, ifile, vfile, ofile, rfile, from_main):
 
 
 # Extract the data from the image, the video or the stream
-def extract_data(dfile, ifile, vfile, ofile, rfile, callback=None, from_main=False):
+def extract_data(dfile, ifile=None, vfile=None, ofile=None, rfile=None, callback=None, from_main=False):
     check_args(dfile, ifile, vfile, ofile, rfile, from_main)
 
     with open(dfile, 'r') as f:
