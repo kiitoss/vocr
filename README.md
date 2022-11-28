@@ -68,6 +68,7 @@ There are two possible uses :
 
 ```python
 import vocr
+import json
 
 # Called at every scan
 def callback(dict):
