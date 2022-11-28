@@ -31,6 +31,34 @@ options:
 
 ---
 
+## Examples
+
+You can reproduce the examples directly by typing the following commands:
+
+### With an image
+
+```sh
+python3 vocr.py -d example/data.json -i example/image.png -o example/output/image.png
+```
+
+## <img src="example/output/image.png" alt="example image">
+
+### With a video
+
+```sh
+python3 vocr.py -d example/data.json -v example/video.mp4 -o example/output/video.avi -r example/output/result.json
+```
+
+## <img src="example/output/video.gif" alt="example video">
+
+### With a stream
+
+No examples are provided for the stream but you can create your own. To do so, simply leave the `-i` and `-v` options blank.
+
+---
+
+---
+
 ## Before running the script
 
 - Use the `-i` option to scan an image
@@ -67,19 +95,23 @@ The input data file is a JSON which contains a list of objects with a label, a b
 ```json
 [
   {
-    "label": "simple-text-recognition",
-    "box": [0, 0, 100, 15]
+    "label": "center",
+    "box": [600, 440, 700, 200]
   },
   {
-    "label": "bigger-text-recognition",
-    "box": [100, 100, 200, 100]
-  },
-  {
-    "label": "try-to-match-patterns",
-    "box": [100, 100, 200, 100],
+    "label": "top.left",
+    "box": [180, 70, 250, 250],
     "match-pattern": {
-      "square": "path-to-square-image.png",
-      "circle": "path-to-circle-image.png"
+      "circle": "example/patterns/circle.png",
+      "square": "example/patterns/square.png"
+    }
+  },
+  {
+    "label": "bottom.right",
+    "box": [1370, 720, 300, 300],
+    "match-pattern": {
+      "circle": "example/patterns/circle.png",
+      "square": "example/patterns/square.png"
     }
   }
 ]
@@ -91,34 +123,37 @@ The output data file is another JSON that could look like this:
 
 ```json
 [
-  {
-    "id": 1,
-    "time": 0.05372333526611328,
-    "data": {
-      "simple-text-recognition": [],
-      "bigger-text-recognition": [
-          "Hello World",
-          "This is earth"
-      ],
-      "try-to-match-patterns": [
-        "square"
-      ]
-  },
-  {
-    "id": 2,
-    "time": 0.25372333526611328,
-    "data": {
-      "simple-text-recognition": [
-        "Hi"
-      ],
-      "bigger-text-recognition": [
-          "The sentence changed"
-      ],
-      "try-to-match-patterns": [
-        "circle"
-      ]
-  }
-]
+    {
+        "id": 1,
+        "time": 0.03295707702636719,
+        "data": {
+            "center": [],
+            "top.left": null,
+            "bottom.right": null
+        }
+    },
+    {
+        "id": 2,
+        "time": 0.7343497276306152,
+        "data": {
+            "center": [
+                "Paris"
+            ],
+            "top.left": null,
+            "bottom.right": null
+        }
+    },
+    {
+        "id": 7,
+        "time": 2.186099052429199,
+        "data": {
+            "center": [
+                "Prague"
+            ],
+            "top.left": "circle",
+            "bottom.right": null
+        }
+    }
 ```
 
 ---

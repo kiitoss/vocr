@@ -1,0 +1,22 @@
+[
+  {
+    "label": "center",
+    "box": [600, 440, 700, 200]
+  },
+  {
+    "label": "top.left",
+    "box": [180, 70, 250, 250],
+    "match-pattern": {
+      "circle": "example/patterns/circle.png",
+      "square": "example/patterns/square.png"
+    }
+  },
+  {
+    "label": "bottom.right",
+    "box": [1370, 720, 300, 300],
+    "match-pattern": {
+      "circle": "example/patterns/circle.png",
+      "square": "example/patterns/square.png"
+    }
+  }
+]

@@ -1,0 +1,77 @@
+[
+    {
+        "id": 1,
+        "time": 0.03295707702636719,
+        "data": {
+            "center": [],
+            "top.left": null,
+            "bottom.right": null
+        }
+    },
+    {
+        "id": 2,
+        "time": 0.7343497276306152,
+        "data": {
+            "center": [
+                "Paris"
+            ],
+            "top.left": null,
+            "bottom.right": null
+        }
+    },
+    {
+        "id": 3,
+        "time": 1.128828525543213,
+        "data": {
+            "center": [
+                "London"
+            ],
+            "top.left": "circle",
+            "bottom.right": null
+        }
+    },
+    {
+        "id": 4,
+        "time": 1.3949038982391357,
+        "data": {
+            "center": [
+                "London"
+            ],
+            "top.left": "circle",
+            "bottom.right": "square"
+        }
+    },
+    {
+        "id": 5,
+        "time": 1.660104513168335,
+        "data": {
+            "center": [
+                "Rome"
+            ],
+            "top.left": null,
+            "bottom.right": "square"
+        }
+    },
+    {
+        "id": 6,
+        "time": 1.9260766506195068,
+        "data": {
+            "center": [
+                "Amsterdan"
+            ],
+            "top.left": "circle",
+            "bottom.right": "square"
+        }
+    },
+    {
+        "id": 7,
+        "time": 2.186099052429199,
+        "data": {
+            "center": [
+                "Prague"
+            ],
+            "top.left": "circle",
+            "bottom.right": null
+        }
+    }
+]
