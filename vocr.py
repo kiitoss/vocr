@@ -9,9 +9,8 @@ try:
 except:
     import extractor
 
+
 # Error function
-
-
 def error(error):
     print(f'Error - {error}')
     sys.exit()
@@ -20,12 +19,12 @@ def error(error):
 # Get arguments passed to the script
 def get_args():
     ap = argparse.ArgumentParser()
+    ap.add_argument("-d", "--dfile", required=True, type=str,
+                    help="path to input data")
     ap.add_argument("-i", "--ifile", type=str,
                     help="path to image file")
     ap.add_argument("-v", "--vfile", type=str,
                     help="path to video file")
-    ap.add_argument("-d", "--dfile", required=True, type=str,
-                    help="path to input data")
     ap.add_argument("-o", "--ofile", type=str,
                     help="path to optionaly output image/video file")
     ap.add_argument("-r", "--rfile", type=str,
@@ -52,12 +51,15 @@ def check_file_extension(filepath, extensions):
 
 
 # Check if arguments are valid
-def check_args(ifile, vfile, dfile, ofile, rfile, from_main):
+def check_args(dfile, ifile, vfile, ofile, rfile, from_main):
     if ifile is not None and vfile is not None:
         error("Only one file can be specified")
 
     if from_main and ifile is None and rfile is None:
         error("You must specify a result file when using a video or a stream")
+
+    check_file_exists(dfile)
+    check_file_extension(dfile, ['.json'])
 
     if ifile is not None:
         check_file_exists(ifile)
@@ -70,13 +72,10 @@ def check_args(ifile, vfile, dfile, ofile, rfile, from_main):
     if rfile is not None:
         check_file_extension(rfile, ['.json'])
 
-    check_file_exists(dfile)
-    check_file_extension(dfile, ['.json'])
-
 
 # Extract the data from the image, the video or the stream
-def extract_data(ifile, vfile, dfile, ofile, rfile, from_main=False):
-    check_args(ifile, vfile, dfile, ofile, rfile, from_main)
+def extract_data(dfile, ifile, vfile, ofile, rfile, callback=None, from_main=False):
+    check_args(dfile, ifile, vfile, ofile, rfile, from_main)
 
     with open(dfile, 'r') as f:
         subimages_coordinates = json.load(f)
@@ -92,7 +91,7 @@ def extract_data(ifile, vfile, dfile, ofile, rfile, from_main=False):
             reader, vfile, subimages_coordinates, ofile)
     else:
         data = extractor.from_stream(
-            reader, subimages_coordinates, ofile)
+            reader, subimages_coordinates, ofile, callback)
 
     return data
 
@@ -100,13 +99,13 @@ def extract_data(ifile, vfile, dfile, ofile, rfile, from_main=False):
 def main():
     args = get_args()
 
+    dfile = args.get("dfile")
     ifile = args.get("ifile")
     vfile = args.get("vfile")
-    dfile = args.get("dfile")
     ofile = args.get("ofile")
     rfile = args.get("rfile")
 
-    data = extract_data(ifile, vfile, dfile, ofile, rfile, True)
+    data = extract_data(dfile, ifile, vfile, ofile, rfile, None, True)
 
     if rfile is not None:
         with open(rfile, 'w') as f:

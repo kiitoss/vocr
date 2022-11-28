@@ -63,6 +63,10 @@ def find_pattern(cropped, patterns):
     best_pattern = None
     best_pattern_match = None
     for key, pattern in patterns.items():
+        if not os.path.exists(pattern):
+            print(f'File {pattern} does not exist')
+            sys.exit()
+
         current_pattern_match = get_pattern_match(cropped, pattern)
 
         # if no similarity found, continue
@@ -143,7 +147,7 @@ def print_processing_infos_in_terminal(is_stream, data, current_frame, total_fra
 
 
 # Extract data from video or stream
-def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
+def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, callback=None):
     is_stream = vfile is None
 
     result = []
@@ -197,8 +201,11 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None):
                 # if the data is different from the previous one
                 if current_data is None or is_data_different(current_data, data.get('data')):
                     result.append(data)
-                    print_processing_infos_in_terminal(
-                        is_stream, data, current_frame, total_frames)
+                    if callback is None:
+                        print_processing_infos_in_terminal(
+                            is_stream, data, current_frame, total_frames)
+                    else:
+                        callback(data)
                     current_data = data.get('data')
                     id_image += 1
 
@@ -231,5 +238,5 @@ def from_video(reader, vfile, subimages_coordinates, ofile):
 
 
 # Extract data from stream
-def from_stream(reader, subimages_coordinates, ofile):
-    return from_video_or_stream(reader, subimages_coordinates, ofile=ofile)
+def from_stream(reader, subimages_coordinates, ofile, callback):
+    return from_video_or_stream(reader, subimages_coordinates, ofile=ofile, callback=callback)
