@@ -68,7 +68,10 @@ def check_args(dfile, ifile, vfile, ofile, rfile, from_main):
         check_file_exists(vfile)
         check_file_extension(vfile, ['.mp4', '.mkv'])
     if ofile is not None:
-        check_file_extension(ofile, ['.avi'])
+        if ifile is not None:
+            check_file_extension(ofile, ['.jpg', '.jpeg', '.png'])
+        elif vfile is not None:
+            check_file_extension(ofile, ['.avi'])
     if rfile is not None:
         check_file_extension(rfile, ['.json'])
 
