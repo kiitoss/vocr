@@ -91,7 +91,7 @@ def extract_data(dfile, ifile=None, vfile=None, ofile=None, rfile=None, callback
             reader, ifile, subimages_coordinates, ofile)
     elif vfile is not None:
         data = extractor.from_video(
-            reader, vfile, subimages_coordinates, ofile)
+            reader, vfile, subimages_coordinates, ofile, callback)
     else:
         data = extractor.from_stream(
             reader, subimages_coordinates, ofile, callback)

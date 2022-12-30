@@ -126,7 +126,11 @@ def from_image(reader, ifile, subimages_coordinates, ofile):
 
 
 # Print additional informations in terminal while processing video
-def print_processing_infos_in_terminal(is_stream, data, current_frame, total_frames):
+def print_processing_infos_in_terminal(is_stream, data_is_different, data, current_frame, total_frames):
+    # if data is the same as previous data, do not print it
+    if is_stream and not data_is_different:
+        return
+
     if not sys.stdout.isatty():
         return
 
@@ -153,9 +157,12 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
     result = []
     id_image = 1
     counter = 0
+    is_video_opened = True
     initial_time = time.time()
 
     current_data = None
+    current_frame = None
+    total_frames = None
 
     # instantiate video capture object
     if is_stream:
@@ -176,7 +183,7 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
         out = cv2.VideoWriter(ofile, fourcc,
                               20.0, (width, height), True)
 
-    while is_stream or video.isOpened():
+    while is_stream or (not is_stream and is_video_opened):
         try:
             # get the frame
             if is_stream:
@@ -184,40 +191,46 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
                 frame = np.array(sct.grab(box))
                 frame = convert_frame_mss_to_cv2(frame)
             else:
-                _, frame = video.read()
+                is_video_opened, frame = video.read()
                 current_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES))
                 # fix video.isOpened() false positive
-                if (current_frame == total_frames):
+                if not video.isOpened():
+                    break
+                if current_frame >= total_frames:
                     break
 
             # image processing
-            if counter % 10 == 0:
+            if counter % 5 == 0:
+                if is_stream:
+                    progress = time.time() - initial_time
+                else:
+                    current_duration = time.time() - initial_time
+                    seconds = current_duration * total_frames / current_frame - current_duration
+                    minutes, seconds = divmod(seconds, 60)
+                    hours, minutes = divmod(minutes, 60)
+                    progress = f'{current_frame} / {total_frames} ~ {int(hours)}:{int(minutes)}:{int(seconds)}'
                 data = {
                     "id": id_image,
-                    "time": time.time() - initial_time,
+                    "progress": progress,
                     "data": extract_information_from_image(reader, frame, subimages_coordinates)
                 }
 
-                # if not stream, print processing infos every 10 frames
-                if not is_stream:
+                # if no callback, print processing infos in terminal
+                if not callback:
+                    data_is_different = current_data is None or is_data_different(current_data, data.get('data'))
+
+                    # print progress
                     print_processing_infos_in_terminal(
-                        is_stream, data, current_frame, total_frames)
+                        is_stream, data_is_different, data, current_frame, total_frames)
 
-                # if data is different from previous data
-                if current_data is None or is_data_different(current_data, data.get('data')):
-                    result.append(data)
+                    # if data is different from previous data
+                    if data_is_different:
+                        result.append(data)
+                        current_data = data.get('data')
+                        id_image += 1
 
-                    # if stream and callback is defined, call it, else print new data
-                    if is_stream and callback is not None:
-                        callback(data)
-                    elif is_stream:
-                        print_processing_infos_in_terminal(
-                            is_stream, data, current_frame, total_frames)
-
-                    current_data = data.get('data')
-                    id_image += 1
-
-                # if the data is different from the previous one
+                else:
+                    callback(data)
 
             counter += 1
 
@@ -243,8 +256,8 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
 
 
 # Extract data from video
-def from_video(reader, vfile, subimages_coordinates, ofile):
-    return from_video_or_stream(reader, subimages_coordinates, vfile=vfile, ofile=ofile)
+def from_video(reader, vfile, subimages_coordinates, ofile, callback):
+    return from_video_or_stream(reader, subimages_coordinates, vfile=vfile, ofile=ofile, callback=callback)
 
 
 # Extract data from stream
