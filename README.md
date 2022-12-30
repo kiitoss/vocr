@@ -176,7 +176,7 @@ The output data file is another JSON that could look like this:
   },
   {
     "id": 7,
-    "progress": "16 / 68 ~ 0:0:3",
+    "progress": "61 / 68 ~ 0:0:0",
     "data": {
       "center": ["Prague"],
       "top.left": "circle",
