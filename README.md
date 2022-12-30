@@ -156,37 +156,34 @@ The output data file is another JSON that could look like this:
 
 ```json
 [
-    {
-        "id": 1,
-        "time": 0.03295707702636719,
-        "data": {
-            "center": [],
-            "top.left": null,
-            "bottom.right": null
-        }
-    },
-    {
-        "id": 2,
-        "time": 0.7343497276306152,
-        "data": {
-            "center": [
-                "Paris"
-            ],
-            "top.left": null,
-            "bottom.right": null
-        }
-    },
-    {
-        "id": 7,
-        "time": 2.186099052429199,
-        "data": {
-            "center": [
-                "Prague"
-            ],
-            "top.left": "circle",
-            "bottom.right": null
-        }
+  {
+    "id": 1,
+    "progress": "1 / 68 ~ 0:0:2",
+    "data": {
+      "center": [],
+      "top.left": null,
+      "bottom.right": null
     }
+  },
+  {
+    "id": 2,
+    "progress": "11 / 68 ~ 0:0:4",
+    "data": {
+      "center": ["Paris"],
+      "top.left": null,
+      "bottom.right": null
+    }
+  },
+  {
+    "id": 7,
+    "progress": "16 / 68 ~ 0:0:3",
+    "data": {
+      "center": ["Prague"],
+      "top.left": "circle",
+      "bottom.right": null
+    }
+  }
+]
 ```
 
 ---
