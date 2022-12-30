@@ -66,6 +66,10 @@ There are two possible uses :
 - Directly from the terminal (explained in detail below)
 - By integrating the folder into your project :
 
+```sh
+pip install git+https://github.com/kiitoss/vocr.git
+```
+
 ```python
 import vocr
 import json
