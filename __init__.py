@@ -1,3 +1,1 @@
-from . import vocr
-
-__all__ = ['vocr']
+from .vocr import extract_data
