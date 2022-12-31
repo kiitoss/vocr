@@ -10,5 +10,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     license='MIT',
-    install_requires=['argparse', 'opencv-contrib-python', 'easyocr', 'numpy', 'mss', 'screeninfo', 'Pillow'],
+    install_requires=['argparse', 'easyocr', 'numpy', 'mss', 'screeninfo', 'Pillow'],
 )
