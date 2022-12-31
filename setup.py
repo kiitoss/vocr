@@ -9,5 +9,6 @@ setup(
     url='https://github.com/kiitoss/vocr',
     packages=find_packages(),
     include_package_data=True,
-    license='MIT'
+    license='MIT',
+    install_requires=['argparse', 'opencv-contrib-python', 'easyocr', 'numpy', 'mss', 'screeninfo', 'Pillow'],
 )
