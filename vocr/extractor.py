@@ -249,9 +249,6 @@ def from_video_or_stream(reader, subimages_coordinates, vfile=None, ofile=None, 
     if out is not None:
         out.release()
 
-    # close any open windows
-    cv2.destroyAllWindows()
-
     return result
 
 
